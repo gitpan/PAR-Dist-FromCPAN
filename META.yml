@@ -1,11 +1,17 @@
 abstract: Create PAR distributions from CPAN
 author: Steffen Mueller (smueller@cpan.org)
 distribution_type: module
-generated_by: Module::Install version 0.62
+generated_by: Module::Install version 0.63
 license: perl
 name: PAR-Dist-FromCPAN
 no_index: 
   directory: 
     - inc
     - t
-version: 0.01
+requires: 
+  CPAN: 1.84
+  Cwd: 0
+  File::Copy: 0
+  PAR::Dist: 0.10
+  perl: 5.6.0
+version: 0.02

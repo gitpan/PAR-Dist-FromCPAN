@@ -82,6 +82,8 @@ same way as, for example "cpan install MODULEPATTERN".
 -t --test
   Indicates whether the modules' tests will be run before the PAR
   distribution is created.
+-p --pattern
+  The module pattern to use.
 HERE
 
 my $pattern;
@@ -100,9 +102,9 @@ GetOptions(
 
 cpan_to_par(
 	pattern => $pattern,
-	($follow       ? (follow  => 1   ) : ()),
-	($verbose      ? (verbose => 1   ) : ()),
-	($test         ? (test    => 1   ) : ()),
-	(defined($out) ? (out     => $out) : ()),
+	($follow          ? (follow  => 1      ) : ()),
+	($v               ? (verbose => 1      ) : ()),
+	($run_tests       ? (test    => 1      ) : ()),
+	(defined($outdir) ? (out     => $outdir) : ()),
 );
 

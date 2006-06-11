@@ -1,5 +1,10 @@
 Revision history for Perl extension PAR::Dist::FromCPAN.
 
+0.02  Thu Jun 11 17:51 2006
+	- cpan2par registered as script in Makefile.PL.
+	- We also need at least CPAN 1.84.
+	- Corrected syntax errors in cpan2par (yuck).
+
 0.01  Thu Jun  1 14:08 2006
 	- original version as uploaded to CPAN
 

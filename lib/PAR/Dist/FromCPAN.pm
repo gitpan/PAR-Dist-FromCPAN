@@ -23,7 +23,7 @@ our @EXPORT = qw(
 	cpan_to_par
 );
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 sub cpan_to_par {
 	die "Uneven number of arguments to 'cpan_to_par'." if @_ % 2;
