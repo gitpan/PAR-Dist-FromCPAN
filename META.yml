@@ -12,6 +12,8 @@ requires:
   CPAN: 1.84
   Cwd: 0
   File::Copy: 0
-  PAR::Dist: 0.10
+  File::Path: 0
+  File::Spec: 0
+  PAR::Dist: 0.12
   perl: 5.6.0
-version: 0.02
+version: 0.03

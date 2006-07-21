@@ -1,5 +1,5 @@
 This file contains message digests of all files listed in MANIFEST,
-signed via the Module::Signature module, version 0.53.
+signed via the Module::Signature module, version 0.54.
 
 To verify the content in this distribution, first make sure you have
 Module::Signature installed, then type:
@@ -14,12 +14,12 @@ not run its Makefile.PL or Build.PL.
 -----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA1
 
-SHA1 a5cff5e3a7cc1651308eb01ad07f5bbef5e61559 Changes
-SHA1 3bd33146b41a408cb7176b96ad312a72aa5a5fd1 MANIFEST
-SHA1 0986b63b1c1a08a9b8783d2b17b3ee703af83054 META.yml
-SHA1 b1e9ff01226c187424132a9675a341b5dccaf1f0 Makefile.PL
+SHA1 7175d4850377ee019796013886a8ecc88fd263c8 Changes
+SHA1 39cb564c32f341c2532280f71941bd6da46be75a MANIFEST
+SHA1 7719f479f85bfffba0995053c16b44c4ebddb91d META.yml
+SHA1 442328201220d70d72feb20c66f50b93119efe67 Makefile.PL
 SHA1 e3fd04dd3f52e863aacfee4658f2fde89af813c8 README
-SHA1 6896d4b3366a386b2857bab18e898135941b1a8a bin/cpan2par
+SHA1 6e45277673210e65ab6de89dd473c05b4610b1d8 bin/cpan2par
 SHA1 017bedfcba1e0c72b36301e6ef21b8712b84d175 inc/Module/Install.pm
 SHA1 b1a70869c098ba602151631386fc510b5bfd3511 inc/Module/Install/Base.pm
 SHA1 dd7313db23119d49ae78593bfa576554fb5b0fd8 inc/Module/Install/Can.pm
@@ -29,14 +29,14 @@ SHA1 8b37b38215d14f922b3d5132ce33d11d21d531ba inc/Module/Install/Metadata.pm
 SHA1 1d8f4739eda5d665bbfe4206bd87274ad104ba77 inc/Module/Install/Scripts.pm
 SHA1 7eb44b00058c44795038d7fa4c0c77470f20a7f8 inc/Module/Install/Win32.pm
 SHA1 6d05967a5e1680b5f118315aaa6b8a1e143d79d8 inc/Module/Install/WriteAll.pm
-SHA1 a126fe2b4bf791cf009858b0b64234010f87d4b0 lib/PAR/Dist/FromCPAN.pm
+SHA1 8a7bc88b2c550adb3dc305f8c097101639185cbd lib/PAR/Dist/FromCPAN.pm
 SHA1 bb0da54f2b3f2d7955baa41ee458cb3d1887f475 t/00pod.t
 SHA1 2db32c1aac44c2e41530ea63431166d91bd458bf t/00podcover.t
 SHA1 26dd1f3792d8d3e61475e1776f7543f85943ddd4 t/01basic.t
 -----BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.0 (GNU/Linux)
+Version: GnuPG v1.4.2.2 (GNU/Linux)
 
-iD8DBQFEjD3pZCuimE51gxcRAv0LAJ0XnHNNrNITRPTQp7YlbQhfxH5xzQCffYgQ
-dt885VVnjWfs2SzQVIyKYPg=
-=1dWs
+iD8DBQFEwOzUZCuimE51gxcRAucQAKChOspZ1jQiYgnLfgLOdv/DO0DsjACfY0SH
+zQDtmpy6+hN8LdNDAAL4biI=
+=yig/
 -----END PGP SIGNATURE-----

@@ -1,5 +1,13 @@
 Revision history for Perl extension PAR::Dist::FromCPAN.
 
+0.03  Thu Jul 21 15:48 2006
+	- Added VERSION to cpan2par.
+	- Added some (probably redundant) dependencies to
+	  Makefile.PL (File::Spec, File::Path).
+	- Added the --merge and --no-docs switches and the
+	  corresponding parameters to the module.
+	- Added the --skip switch for skipping som modules.
+
 0.02  Thu Jun 11 17:51 2006
 	- cpan2par registered as script in Makefile.PL.
 	- We also need at least CPAN 1.84.

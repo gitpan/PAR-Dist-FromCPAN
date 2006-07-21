@@ -5,6 +5,8 @@ use warnings;
 use Getopt::Long qw/GetOptions/;
 use PAR::Dist::FromCPAN;
 
+our $VERSION = '0.03';
+
 =pod
 
 =head1 NAME
@@ -31,10 +33,23 @@ same way as, for example C<cpan install MODULEPATTERN>.
   -o --out
     Sets the output directory. (default: .)
   -f --follow
-    Follow dependencies and recusrively generate PAR distributions.
+    Follow dependencies and recursively generate PAR distributions.
   -t --test
     Indicates whether the modules' tests will be run before the PAR
     distribution is created.
+  -m --merge
+    Merge all modules into the main PAR distribution instead
+    of creating separate .par files for each dependency.
+    (This step is carried out at the end. If something goes wrong,
+     it will be skipped.)
+  --no-docs
+    Strip all documentation (man pages, html documentation) from the
+    resulting PAR distribution.
+    (This step is carried out at the end. If something goes wrong,
+     it will be skipped.)
+  -s --skip
+    Skip modules that match this regex. (May be specified multiple
+    times.)
 
 =head1 SEE ALSO
 
@@ -66,7 +81,7 @@ at your option, any later version of Perl 5 you may have available.
 my $usage = <<"HERE";
 $0 --help          # for help
 
-$0 [-v -f -t -o DIR] -p MODULEPATTERN
+$0 [-v -f -t -o DIR -m --no-docs] -p MODULEPATTERN
 
 This script creates PAR distributions from any number of modules
 from CPAN. The only mandatory parameter is a pattern matching the
@@ -84,6 +99,19 @@ same way as, for example "cpan install MODULEPATTERN".
   distribution is created.
 -p --pattern
   The module pattern to use.
+-m --merge
+  Merge all modules into the main PAR distribution instead
+  of creating separate .par files for each dependency.
+  (This step is carried out at the end. If something goes wrong,
+   it will be skipped.)
+--no-docs
+  Strip all documentation (man pages, html documentation) from the
+  resulting PAR distribution.
+  (This step is carried out at the end. If something goes wrong,
+   it will be skipped.)
+-s --skip
+  Skip modules that match this regex. (May be specified multiple
+  times.)
 HERE
 
 my $pattern;
@@ -91,6 +119,9 @@ my $outdir = '.';
 my $follow = 0;
 my $run_tests = 0;
 my $v = 0;
+my $merge = 0;
+my $nodocs = 0;
+my @skip;
 GetOptions(
 	'h|help' => sub { print $usage; exit(1) },
 	'o|out=s' => \$outdir,
@@ -98,13 +129,19 @@ GetOptions(
 	'f|follow' => \$follow,
 	'v|verbose' => \$v,
 	't|test' => \$run_tests,
+	'm|merge' => \$merge,
+	'no-docs' => \$nodocs,
+	's|skip=s' => \@skip,
 );
 
 cpan_to_par(
 	pattern => $pattern,
-	($follow          ? (follow  => 1      ) : ()),
-	($v               ? (verbose => 1      ) : ()),
-	($run_tests       ? (test    => 1      ) : ()),
-	(defined($outdir) ? (out     => $outdir) : ()),
+	($follow          ? (follow     => 1      ) : ()),
+	($v               ? (verbose    => 1      ) : ()),
+	($run_tests       ? (test       => 1      ) : ()),
+	(defined($outdir) ? (out        => $outdir) : ()),
+	($merge           ? (merge      => 1      ) : ()),
+	($nodocs          ? (strip_docs => 1      ) : ()),
+	(@skip            ? (skip       => \@skip ) : ()),
 );
 

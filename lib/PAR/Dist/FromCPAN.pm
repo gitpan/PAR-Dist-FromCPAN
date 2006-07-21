@@ -8,6 +8,8 @@ use CPAN;
 use PAR::Dist;
 use File::Copy;
 use Cwd qw/cwd abs_path/;
+use File::Spec;
+use File::Path;
 
 require Exporter;
 
@@ -23,7 +25,7 @@ our @EXPORT = qw(
 	cpan_to_par
 );
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 sub cpan_to_par {
 	die "Uneven number of arguments to 'cpan_to_par'." if @_ % 2;
@@ -32,16 +34,22 @@ sub cpan_to_par {
 		die "You need to specify a module pattern.";
 	}
 	my $pattern = $args{pattern};
+	my $skip_ary = $args{skip} || [];
 
 	my $outdir = abs_path(defined($args{out}) ? $args{out} : '.');
 	die "Output path not a directory." if not -d $outdir;
 
 	print "Expanding module pattern.\n" if $args{verbose};
 
-	my @mod = CPAN::Shell->expand('Module', $pattern);
-
+	my @mod = grep {
+		_skip_this($skip_ary, $_->id) ? () : $_
+	} CPAN::Shell->expand('Module', $pattern);
+	
 	my %seen;
 	my @failed;
+
+	my @par_files;
+	
 	foreach my $mod (@mod) {
 		my $file = $mod->cpan_file();
 		if ($seen{$file}) {
@@ -69,11 +77,14 @@ sub cpan_to_par {
 			my $pre_req = $dist->prereq_pm;
 			next if not defined $pre_req;
 			my @modules =
+				grep {
+					_skip_this($skip_ary, $_->id) ? () : $_
+				}
 				map {CPAN::Shell->expand('Module', $_)}
 				keys %$pre_req;
 			my %this_seen;
 			@modules =
-				grep { $seen{$_->cpan_file}||$this_seen{$file}++ ? 0 : 1 }
+				grep { $seen{$_->cpan_file}||$this_seen{$_->cpan_file}++ ? 0 : 1 }
 				@modules;
 			print "Recursively adding dependencies: \n"
 				. join("\n", map {$_->cpan_file} @modules) . "\n";
@@ -92,16 +103,18 @@ sub cpan_to_par {
 
 		chdir($dir);
 		my $par_file = blib_to_par();
+		die "Could not find PAR distribution file '$par_file'."
+			if not -f $par_file;
 		print "Generated PAR distribution as file '$par_file'\n"
 			if $args{verbose};
 		print "Moving distribution file to output directory '$outdir'.\n"
 			if $args{verbose};
-		die "Could not find PAR distribution file '$par_file'."
-			if not -f $par_file;
 		unless(File::Copy::move($par_file, $outdir)) {
 			die "Could not move file '$par_file' to directory "
 			."'$outdir'. Reason: $!";
 		}
+		$par_file = File::Spec->catfile($outdir, $par_file);
+		push @par_files, $par_file if -f $par_file;
 	}
 
 	if (@failed) {
@@ -112,7 +125,40 @@ sub cpan_to_par {
 		}
 	}
 
+	# Merge deps
+	if ($args{merge}) {
+		print "Merging PAR distributions into one.\n"
+		  if $args{verbose};
+		merge_par(
+			@par_files
+		);
+		foreach my $file (@par_files[1..@par_files-1]) {
+			File::Path::rmtree($file);
+		}
+		@par_files = ($par_files[0]);
+	}
+
+	# strip docs
+	if ($args{strip_docs}) {
+		print "Removing documentation from the PAR distribution(s).\n"
+		  if $args{verbose};
+		remove_man($_) for @par_files;
+	}
+	
 	return(1);
+}
+
+sub _skip_this {
+	my $ary = shift;
+	my $string = shift;
+	study($string) if @$ary > 2;
+#	print $string.":\n";
+	for (@$ary) {
+#		print "--> $_\n";
+#		warn("MATCHES: $string"), sleep(5), return(1) if $string =~ /$_/;
+		return(1) if $string =~ /$_/;
+	}
+	return 0;
 }
 
 1;
@@ -164,11 +210,15 @@ same way as, for example C<cpan install MODULEPATTERN>.
 
 Arguments:
 
-  pattern => 'patternstring'
-  out     => 'directory'  (write distribution files to this directory)
-  verbose => 1/0  (verbose mode on/off)
-  test    => 1/0  (run module tests on/off)
-  follow  => 1/0  (also create distributions for dependencies on/off)
+  pattern    => 'patternstring'
+  out        => 'directory'  (write distribution files to this directory)
+  verbose    => 1/0 (verbose mode on/off)
+  test       => 1/0 (run module tests on/off)
+  follow     => 1/0 (also create distributions for dependencies on/off)
+  merge      => 1/0 (merge everything into one .par archive)
+  strip_docs => 1/0 (strip all man* and html documentation)
+  skip       => \@ary (skip all modules that match any of the regulat
+                       expressions in @ary)
 
 =head1 SEE ALSO
 
