@@ -14,6 +14,7 @@ requires      'File::Copy' => '0';
 requires      'File::Path' => '0';
 requires      'File::Spec' => '0';
 requires      'Cwd' => '0';
+requires      'Module::CoreList' => '0';
 requires      'perl' => '5.006';
 
 &WriteAll     ( sign => 1 );

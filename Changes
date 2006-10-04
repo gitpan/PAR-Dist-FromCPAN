@@ -1,18 +1,30 @@
 Revision history for Perl extension PAR::Dist::FromCPAN.
 
+0.04  Wed Oct  4 09:00 2006
+    - Upgraded to Module::Install 0.64.
+    All of these changes were provided by Jesse Vincent: (thanks!)
+    - Add a "_diag" method, to clean up all the code that checks
+      'verbose' and send output
+    - Improved dependency resolution
+    - for loop was very unhappy as we modified its list on the fly
+    - actually PAR dependencies _before_ the thing that depends on them
+    - When a module depends on a dual-lifed module that was already in
+      the core as of $^V, use the core version. Without this change,
+      Module::Build can't be autopared
+
 0.03  Thu Jul 21 15:48 2006
-	- Added VERSION to cpan2par.
-	- Added some (probably redundant) dependencies to
-	  Makefile.PL (File::Spec, File::Path).
-	- Added the --merge and --no-docs switches and the
-	  corresponding parameters to the module.
-	- Added the --skip switch for skipping som modules.
+    - Added VERSION to cpan2par.
+    - Added some (probably redundant) dependencies to
+      Makefile.PL (File::Spec, File::Path).
+    - Added the --merge and --no-docs switches and the
+      corresponding parameters to the module.
+    - Added the --skip switch for skipping som modules.
 
 0.02  Thu Jun 11 17:51 2006
-	- cpan2par registered as script in Makefile.PL.
-	- We also need at least CPAN 1.84.
-	- Corrected syntax errors in cpan2par (yuck).
+    - cpan2par registered as script in Makefile.PL.
+    - We also need at least CPAN 1.84.
+    - Corrected syntax errors in cpan2par (yuck).
 
 0.01  Thu Jun  1 14:08 2006
-	- original version as uploaded to CPAN
+    - original version as uploaded to CPAN
 

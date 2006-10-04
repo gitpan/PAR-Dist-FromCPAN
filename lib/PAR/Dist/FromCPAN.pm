@@ -10,155 +10,201 @@ use File::Copy;
 use Cwd qw/cwd abs_path/;
 use File::Spec;
 use File::Path;
+use Module::CoreList;
 
 require Exporter;
 
 our @ISA = qw(Exporter);
 
 our %EXPORT_TAGS = ( 'all' => [ qw(
-	cpan_to_par
+    cpan_to_par
 ) ] );
 
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 our @EXPORT = qw(
-	cpan_to_par
+    cpan_to_par
 );
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
+
+our $VERBOSE = 0;
+
+
+sub _verbose {
+    $VERBOSE = shift if (@_);
+    return $VERBOSE
+}
+
+sub _diag {
+    my $msg = shift;
+    return unless _verbose();
+    print $msg ."\n"; 
+}
 
 sub cpan_to_par {
-	die "Uneven number of arguments to 'cpan_to_par'." if @_ % 2;
-	my %args = @_;
-	if (not defined $args{pattern}) {
-		die "You need to specify a module pattern.";
-	}
-	my $pattern = $args{pattern};
-	my $skip_ary = $args{skip} || [];
+    die "Uneven number of arguments to 'cpan_to_par'." if @_ % 2;
+    my %args = @_;
+ 
+    _verbose($args{'verbose'});
 
-	my $outdir = abs_path(defined($args{out}) ? $args{out} : '.');
-	die "Output path not a directory." if not -d $outdir;
+    if (not defined $args{pattern}) {
+        die "You need to specify a module pattern.";
+    }
+    my $pattern = $args{pattern};
+    my $skip_ary = $args{skip} || [];
 
-	print "Expanding module pattern.\n" if $args{verbose};
+    my $outdir = abs_path(defined($args{out}) ? $args{out} : '.');
+    die "Output path not a directory." if not -d $outdir;
 
-	my @mod = grep {
-		_skip_this($skip_ary, $_->id) ? () : $_
-	} CPAN::Shell->expand('Module', $pattern);
-	
-	my %seen;
-	my @failed;
+    _diag "Expanding module pattern.";
 
-	my @par_files;
-	
-	foreach my $mod (@mod) {
-		my $file = $mod->cpan_file();
-		if ($seen{$file}) {
-			print("Skipping previously processed module:\n".$mod->as_glimpse()."\n") if $args{verbose};
-			next;
-		}
-		$seen{$file}++;
-		print "Processing next module:\n".$mod->as_glimpse()."\n" if $args{verbose};
+    my @mod = grep {
+        _skip_this($skip_ary, $_->id) ? () : $_
+    } CPAN::Shell->expand('Module', $pattern);
+    
+    my %seen;
+    my @failed;
 
-		# This branch isn't entered because $mod->make() doesn't
-		# indicate an error if it occurred...
-		if (not $mod->make() and 0) {
-			print "Something went wrong making the following module:\n"
-			.$mod->as_glimpse()
-			."\nWe will try to continue. A summary of all failed modules "
-			."will be given\nat the end of the script execution in order "
-			."of appearance.\n";
-			push @failed, $mod;
-		}
+    my @par_files;
+    
+    while (my $mod = shift @mod) {
 
-		# recursive dependency solving?
-		if ($args{follow}) {
-			print "Checking dependencies.\n" if $args{verbose};
-			my $dist = $mod->distribution;
-			my $pre_req = $dist->prereq_pm;
-			next if not defined $pre_req;
-			my @modules =
-				grep {
-					_skip_this($skip_ary, $_->id) ? () : $_
-				}
-				map {CPAN::Shell->expand('Module', $_)}
-				keys %$pre_req;
-			my %this_seen;
-			@modules =
-				grep { $seen{$_->cpan_file}||$this_seen{$_->cpan_file}++ ? 0 : 1 }
-				@modules;
-			print "Recursively adding dependencies: \n"
-				. join("\n", map {$_->cpan_file} @modules) . "\n";
-			push @mod, @modules;
-		}
+        my $file = $mod->cpan_file();
+        if ($seen{$file}) {
+            _diag "Skipping previously processed module:\n".$mod->as_glimpse();
 
-		# Run tests?
-		if ($args{test}) {
-			print "Running tests.\n" if $args{verbose};
-			$mod->test();
-		}
+            next;
+        }
+        $seen{$file}++;
+        
 
-		# create PAR distro
-		my $dir = $mod->distribution->dir;
-		print "Module was built in '$dir'.\n" if $args{verbose};
+        my $first_in = Module::CoreList->first_release( $mod->id );
+        if ( defined $first_in and $first_in <= $^V ) {
+            print "Skipping ".$mod->id.". It's been core since $first_in\n";
+            next;
+        }
+        if ( $mod->distribution->isa_perl ) {
+            print "Skipping ".$mod->id.". It's only in the core. OOPS\n";
+            next;
+        }
 
-		chdir($dir);
-		my $par_file = blib_to_par();
-		die "Could not find PAR distribution file '$par_file'."
-			if not -f $par_file;
-		print "Generated PAR distribution as file '$par_file'\n"
-			if $args{verbose};
-		print "Moving distribution file to output directory '$outdir'.\n"
-			if $args{verbose};
-		unless(File::Copy::move($par_file, $outdir)) {
-			die "Could not move file '$par_file' to directory "
-			."'$outdir'. Reason: $!";
-		}
-		$par_file = File::Spec->catfile($outdir, $par_file);
-		push @par_files, $par_file if -f $par_file;
-	}
+        _diag "Processing next module:\n".$mod->as_glimpse();
+ 
 
-	if (@failed) {
-		print "There were modules that failed to build. "
-		."These are in order of appearance:\n";
-		foreach (@failed) {
-			print $_->as_glimpse()."\n";
-		}
-	}
+        # This branch isn't entered because $mod->make() doesn't
+        # indicate an error if it occurred...
+        if (not $mod->make() and 0) {
+            print "Something went wrong making the following module:\n"
+              . $mod->as_glimpse()
+              . "\nWe will try to continue. A summary of all failed modules "
+              . "will be given\nat the end of the script execution in order "
+              . "of appearance.\n";
+            push @failed, $mod;
+        }
 
-	# Merge deps
-	if ($args{merge}) {
-		print "Merging PAR distributions into one.\n"
-		  if $args{verbose};
-		merge_par(
-			@par_files
-		);
-		foreach my $file (@par_files[1..@par_files-1]) {
-			File::Path::rmtree($file);
-		}
-		@par_files = ($par_files[0]);
-	}
+        # recursive dependency solving?
+        if ($args{follow}) {
+            _diag "Checking dependencies.";
+            my $dist = $mod->distribution;
+            my $pre_req = $dist->prereq_pm;
 
-	# strip docs
-	if ($args{strip_docs}) {
-		print "Removing documentation from the PAR distribution(s).\n"
-		  if $args{verbose};
-		remove_man($_) for @par_files;
-	}
-	
-	return(1);
+            if ($pre_req) {
+                my @modules =
+                    grep {
+                        _skip_this($skip_ary, $_->id) ? () : $_
+                    }
+                    map {CPAN::Shell->expand('Module', $_)}
+                    keys %$pre_req;
+                my %this_seen;
+                @modules =
+                    grep {
+                        $seen{$_->cpan_file}
+                        || $this_seen{$_->cpan_file}++ ? 0 : 1
+                    }
+                    @modules;
+                print "Recursively adding dependencies for ".$mod->id.": \n"
+                  . join("\n", map {$_->cpan_file} @modules) . "\n";
+                if (@modules) {
+                    # first we handle the dependencies
+                    @mod = (@modules, @mod,$mod);
+                    $seen{$file}--;
+                    next;
+                }
+            } 
+            _diag "Finished resolving dependencies for ".$mod->id;
+
+        }
+
+        # Run tests?
+        if ($args{test}) {
+            _diag "Running tests.";
+            $mod->test();
+        }
+
+        _diag "Building PAR ".$mod->id;
+        # create PAR distro
+        my $dir = $mod->distribution->dir;
+        _diag "Module was built in '$dir'.";
+
+        chdir($dir);
+        my $par_file;
+        eval { $par_file = blib_to_par()} || die $@;
+        _diag "Built PAR ".$mod->id." in $par_file";
+        die "Could not find PAR distribution file '$par_file'."
+          if not -f $par_file;
+        _diag "Generated PAR distribution as file '$par_file'";
+        _diag "Moving distribution file to output directory '$outdir'.";
+
+        unless(File::Copy::move($par_file, $outdir)) {
+            die "Could not move file '$par_file' to directory "
+              . "'$outdir'. Reason: $!";
+        }
+        $par_file = File::Spec->catfile($outdir, $par_file);
+        if (-f $par_file) {
+            push @par_files, $par_file;
+        }
+    }
+
+    if (@failed) {
+        print "There were modules that failed to build. "
+          . "These are in order of appearance:\n";
+        foreach (@failed) {
+            print $_->as_glimpse()."\n";
+        }
+    }
+
+    # Merge deps
+    if ($args{merge}) {
+        _diag "Merging PAR distributions into one:\n". join(', ', @par_files);
+        @par_files = reverse(@par_files); # we resolve dependencies _first.
+        merge_par( @par_files );
+        foreach my $file (@par_files[1..@par_files-1]) {
+            File::Path::rmtree($file);
+        }
+        @par_files = ($par_files[0]);
+    }
+
+    # strip docs
+    if ($args{strip_docs}) {
+        _diag "Removing documentation from the PAR distribution(s).";
+        remove_man($_) for @par_files;
+    }
+    
+    return(1);
 }
 
 sub _skip_this {
-	my $ary = shift;
-	my $string = shift;
-	study($string) if @$ary > 2;
-#	print $string.":\n";
-	for (@$ary) {
-#		print "--> $_\n";
-#		warn("MATCHES: $string"), sleep(5), return(1) if $string =~ /$_/;
-		return(1) if $string =~ /$_/;
-	}
-	return 0;
+    my $ary = shift;
+    my $string = shift;
+    study($string) if @$ary > 2;
+#   print $string.":\n";
+    for (@$ary) {
+#       print "--> $_\n";
+#       warn("MATCHES: $string"), sleep(5), return(1) if $string =~ /$_/;
+        return(1) if $string =~ /$_/;
+    }
+    return 0;
 }
 
 1;
@@ -235,6 +281,7 @@ The official PAR website may be of help, too: http://par.perl.org
 =head1 AUTHOR
 
 Steffen Mueller, E<lt>smueller at cpan dot orgE<gt>
+Jesse Vincent
 
 =head1 COPYRIGHT AND LICENSE
 
