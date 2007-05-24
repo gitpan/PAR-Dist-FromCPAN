@@ -1,5 +1,11 @@
 Revision history for Perl extension PAR::Dist::FromCPAN.
 
+0.05  Thu May 24 11:22 2007
+    - Fix the 'follow' option as per RT ticket #27246.
+    - Upgrade Module::Install to 0.67
+    - Upgrade dependency on PAR::Dist to 0.22 because of a critical
+      bug fix in PAR::Dist.
+
 0.04  Wed Oct  4 09:00 2006
     - Upgraded to Module::Install 0.64.
     All of these changes were provided by Jesse Vincent: (thanks!)

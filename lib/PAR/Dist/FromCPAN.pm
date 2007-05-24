@@ -26,7 +26,7 @@ our @EXPORT = qw(
     cpan_to_par
 );
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 our $VERBOSE = 0;
 
@@ -115,7 +115,8 @@ sub cpan_to_par {
                         _skip_this($skip_ary, $_->id) ? () : $_
                     }
                     map {CPAN::Shell->expand('Module', $_)}
-                    keys %$pre_req;
+                    keys %{$pre_req->{requires} || {}},
+                    keys %{$pre_req->{build_requires} || {}};
                 my %this_seen;
                 @modules =
                     grep {
@@ -251,7 +252,7 @@ This is a list of all public subroutines in the module.
 =head2 cpan_to_par
 
 The only mandatory parameter is a pattern matching the
-modules you wish to create PAR distributions from.This works the
+modules you wish to create PAR distributions from. This works the
 same way as, for example C<cpan install MODULEPATTERN>.
 
 Arguments:
@@ -263,7 +264,7 @@ Arguments:
   follow     => 1/0 (also create distributions for dependencies on/off)
   merge      => 1/0 (merge everything into one .par archive)
   strip_docs => 1/0 (strip all man* and html documentation)
-  skip       => \@ary (skip all modules that match any of the regulat
+  skip       => \@ary (skip all modules that match any of the regular
                        expressions in @ary)
 
 =head1 SEE ALSO
@@ -285,7 +286,7 @@ Jesse Vincent
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2006 by Steffen Mueller
+Copyright (C) 2006-2007 by Steffen Mueller
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.6 or,
