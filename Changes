@@ -1,5 +1,8 @@
 Revision history for Perl extension PAR::Dist::FromCPAN.
 
+0.06  Fri Jun  1 15:22 2007
+    - Somehow, 'follow' was still broken...
+
 0.05  Thu May 24 11:22 2007
     - Fix the 'follow' option as per RT ticket #27246.
     - Upgrade Module::Install to 0.67

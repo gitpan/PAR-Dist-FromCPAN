@@ -26,7 +26,7 @@ our @EXPORT = qw(
     cpan_to_par
 );
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 our $VERBOSE = 0;
 
@@ -90,7 +90,6 @@ sub cpan_to_par {
         }
 
         _diag "Processing next module:\n".$mod->as_glimpse();
- 
 
         # This branch isn't entered because $mod->make() doesn't
         # indicate an error if it occurred...
@@ -115,7 +114,12 @@ sub cpan_to_par {
                         _skip_this($skip_ary, $_->id) ? () : $_
                     }
                     map {CPAN::Shell->expand('Module', $_)}
+                    grep { $_ !~ /^(?:build_)?requires$/ }
+                    # this is a hack, but some users seem to require "requires"
+                    # and "build_requires" whereas I only see modules in $pre_req
+                    # itself... --Steffen
                     keys %{$pre_req->{requires} || {}},
+                    keys %{$pre_req},
                     keys %{$pre_req->{build_requires} || {}};
                 my %this_seen;
                 @modules =
@@ -124,12 +128,12 @@ sub cpan_to_par {
                         || $this_seen{$_->cpan_file}++ ? 0 : 1
                     }
                     @modules;
-                print "Recursively adding dependencies for ".$mod->id.": \n"
+                _diag "Recursively adding dependencies for ".$mod->id.": \n"
                   . join("\n", map {$_->cpan_file} @modules) . "\n";
                 if (@modules) {
                     # first we handle the dependencies
                     @mod = (@modules, @mod,$mod);
-                    $seen{$file}--;
+                    $seen{$file}++;
                     next;
                 }
             } 
