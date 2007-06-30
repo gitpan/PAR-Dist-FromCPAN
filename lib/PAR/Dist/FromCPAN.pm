@@ -4,6 +4,8 @@ use 5.006;
 use strict;
 use warnings;
 
+our $VERSION = '0.08';
+
 use CPAN;
 use PAR::Dist;
 use File::Copy;
@@ -26,7 +28,6 @@ our @EXPORT = qw(
     cpan_to_par
 );
 
-our $VERSION = '0.06';
 
 our $VERBOSE = 0;
 
@@ -59,16 +60,17 @@ sub cpan_to_par {
 
     _diag "Expanding module pattern.";
 
-    my @mod = grep {
+    my @modules_queue = grep {
         _skip_this($skip_ary, $_->id) ? () : $_
     } CPAN::Shell->expand('Module', $pattern);
     
     my %seen;
+    my %seen_multiple_times;
     my @failed;
 
     my @par_files;
     
-    while (my $mod = shift @mod) {
+    while (my $mod = shift @modules_queue) {
 
         my $file = $mod->cpan_file();
         if ($seen{$file}) {
@@ -131,9 +133,20 @@ sub cpan_to_par {
                 _diag "Recursively adding dependencies for ".$mod->id.": \n"
                   . join("\n", map {$_->cpan_file} @modules) . "\n";
                 if (@modules) {
-                    # first we handle the dependencies
-                    @mod = (@modules, @mod,$mod);
-                    $seen{$file}++;
+                    # first we handle the dependencies,
+                    # then revisit the module, then process the
+                    # rest of the queue
+                    @modules_queue = (@modules, $mod, @modules_queue);
+                    # Email::MIME requires Email::Simple and
+                    # Email::Simple require Email::MIME. WTF?
+                    if ($seen_multiple_times{$file}) {
+                        print "I've processed file '$file' multiple times now.\n"
+                            . "I will skip it because it seems to have circular dependencies!\n";
+                    }
+                    else {
+                        delete $seen{$file};
+                        $seen_multiple_times{$file}++;
+                    }
                     next;
                 }
             } 

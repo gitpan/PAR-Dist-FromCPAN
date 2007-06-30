@@ -5,7 +5,7 @@ use warnings;
 use Getopt::Long qw/GetOptions/;
 use PAR::Dist::FromCPAN;
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 =pod
 
@@ -30,6 +30,8 @@ same way as, for example C<cpan install MODULEPATTERN>.
 
   -v --verbose
     Sets the verbose mode.
+  -p --pattern
+    The module pattern to use.
   -o --out
     Sets the output directory. (default: .)
   -f --follow
@@ -70,7 +72,7 @@ Steffen Mueller, E<lt>smueller at cpan dot orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2006 by Steffen Mueller
+Copyright (C) 2006-2007 by Steffen Mueller
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.6 or,
@@ -133,6 +135,15 @@ GetOptions(
 	'no-docs' => \$nodocs,
 	's|skip=s' => \@skip,
 );
+
+if (not defined $pattern) {
+    $pattern = shift @ARGV;
+}
+
+if (not defined $pattern) {
+    print "You need to supply a module pattern. Try --help for help.\n";
+    exit(1);
+}
 
 cpan_to_par(
 	pattern => $pattern,

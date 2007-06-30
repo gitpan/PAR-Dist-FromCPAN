@@ -1,5 +1,15 @@
 Revision history for Perl extension PAR::Dist::FromCPAN.
 
+0.08  Sat Jun 30 17:05 2007
+    - If the --pattern argument to cpan2par is omitted, we look at @ARGV
+      for patterns:
+      "cpan2par Foo::Bar" should now package Foo::Bar
+
+0.07  Wed Jun 20 14:46 2007
+    - Circular dependencies of Email::Simple and Email::MIME caused
+      trouble. From now on, circular deps should be broken and
+      *skipped*.
+
 0.06  Fri Jun  1 15:22 2007
     - Somehow, 'follow' was still broken...
 
