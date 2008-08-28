@@ -9,13 +9,15 @@ license       ('perl');
 install_script('bin/cpan2par');
 
 requires      'CPAN' => '1.84';
-requires      'PAR::Dist' => '0.22';
+requires      'PAR::Dist' => '0.31';
 requires      'File::Copy' => '0';
 requires      'File::Path' => '0';
 requires      'File::Spec' => '0';
+requires      'File::Find' => '0';
 requires      'Cwd' => '0';
 requires      'Module::CoreList' => '0';
+requires      'Archive::Zip' => '0';
 requires      'perl' => '5.006';
 
-&WriteAll     ( sign => 1 );
+&WriteAll     ();
 

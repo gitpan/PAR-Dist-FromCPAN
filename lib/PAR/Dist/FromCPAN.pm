@@ -4,7 +4,7 @@ use 5.006;
 use strict;
 use warnings;
 
-our $VERSION = '0.08';
+our $VERSION = '0.10';
 
 use CPAN;
 use PAR::Dist;
@@ -167,10 +167,23 @@ sub cpan_to_par {
 
         chdir($dir);
         my $par_file;
-        eval { $par_file = blib_to_par()} || die $@;
+
+        # The name of the .par being generated will contain the platform name and
+        # perl version. If the user requested an auto-detection, we potentially
+        # override this with a platform agnostic suffix. Read the PAR::Repository
+        # documentation for an explanation of its meaning.
+        my $is_platform_agnostic = $args{auto_detect_pure_perl} && _is_pure_perl($dir);
+        _diag "Distribution seems to be pure-Perl. Building platform agnostic PAR distribution." if $is_platform_agnostic;
+        eval {
+            $par_file = ($is_platform_agnostic
+              ? blib_to_par(suffix => "any_arch-any_version.par")
+              : blib_to_par()
+            );
+        } or die "Failed to build PAR distribution $@";
         _diag "Built PAR ".$mod->id." in $par_file";
         die "Could not find PAR distribution file '$par_file'."
           if not -f $par_file;
+
         _diag "Generated PAR distribution as file '$par_file'";
         _diag "Moving distribution file to output directory '$outdir'.";
 
@@ -223,6 +236,59 @@ sub _skip_this {
         return(1) if $string =~ /$_/;
     }
     return 0;
+}
+
+sub _is_pure_perl {
+  my $path = shift;
+  my $olddir = Cwd::cwd();
+  chdir($path);
+
+  _diag "Checking whether the distribution unpacked in directory '$path' is pure-Perl.";
+
+  my $xs_files = qr/(?i:\.(?:swg|xs|[hic])$)/;
+  # if we can, read manifest to check for telling file names
+  if (-f 'MANIFEST') {
+    open my $fh, '<', "MANIFEST" or die "Could not open file MANIFEST for reading: $!";
+    while (defined($_=<$fh>)) {
+      chomp;
+      if ($_ =~ $xs_files) {
+        _diag "MANIFEST contains the line '$_' which makes me deem the distribution platform-dependent.";
+        chdir($olddir);
+        return 0;
+      }
+    }
+  }
+
+  # walk the tree, check for telling file names,
+  # grep for Inline::C
+  my $has_xs = 0;
+  require File::Find;
+  File::Find::find(
+    sub {
+      return if $has_xs; # short-circuit
+      my $file = $_;
+      if ($file =~ $xs_files) {
+        _diag "Directory contains file '$file' which probably makes the distribution platform-dependent.";
+        $has_xs = 1;
+        return;
+      }
+      open my $fh, '<', $file
+        or die "Could not open file '$file' for reading while scanning for XS: $!";
+      while (defined($_=<$fh>)) {
+        if (/Inline(?:X::XS|(?:::|\s+)C)/) {
+          _diag "File '$file' contains mention of Inline::C => distribution is platform-dependent.";
+          $has_xs = 1;
+          close($fh);
+          return;
+        }
+      }
+      close $fh;
+      return;
+    }, '.'
+  );
+
+  chdir($olddir);
+  return !$has_xs;
 }
 
 1;
@@ -283,6 +349,9 @@ Arguments:
   strip_docs => 1/0 (strip all man* and html documentation)
   skip       => \@ary (skip all modules that match any of the regular
                        expressions in @ary)
+  auto_detect_pure_perl => 1/0 (Flags the PAR distribution platform and
+                                perl version agnostic if it is deemed
+                                pure-perl.)
 
 =head1 SEE ALSO
 
@@ -299,11 +368,12 @@ The official PAR website may be of help, too: http://par.perl.org
 =head1 AUTHOR
 
 Steffen Mueller, E<lt>smueller at cpan dot orgE<gt>
+
 Jesse Vincent
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2006-2007 by Steffen Mueller
+Copyright (C) 2006-2008 by Steffen Mueller
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.6 or,

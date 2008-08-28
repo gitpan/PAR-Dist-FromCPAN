@@ -1,5 +1,17 @@
 Revision history for Perl extension PAR::Dist::FromCPAN.
 
+0.10  Thu Aug 28 15:17 2008
+    - Require Archive::Zip to prevent users from running into
+      RT #24057.
+
+0.09  Wed May 28 22:37 2008
+    - New option to cpan2par: -a or --auto-detect-pure-perl.
+      Automatically flags a distribution as pure-perl if it doesn't
+      seem to contain files that need compilation.
+    - Upgrade to newest Module::Install.
+    - No more SIGNATURE.
+    - Depend on PAR::Dist 0.31.
+
 0.08  Sat Jun 30 17:05 2007
     - If the --pattern argument to cpan2par is omitted, we look at @ARGV
       for patterns:

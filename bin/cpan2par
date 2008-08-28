@@ -5,7 +5,7 @@ use warnings;
 use Getopt::Long qw/GetOptions/;
 use PAR::Dist::FromCPAN;
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 =pod
 
@@ -52,6 +52,10 @@ same way as, for example C<cpan install MODULEPATTERN>.
   -s --skip
     Skip modules that match this regex. (May be specified multiple
     times.)
+  -a --auto-detect-pure-perl
+    Auto-detect whether a distribution is pure-Perl (i.e. does not
+    contain portions that require a C compiler) and flag the
+    produced distribution as such by changing its name.
 
 =head1 SEE ALSO
 
@@ -72,7 +76,7 @@ Steffen Mueller, E<lt>smueller at cpan dot orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2006-2007 by Steffen Mueller
+Copyright (C) 2006-2008 by Steffen Mueller
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.6 or,
@@ -114,6 +118,10 @@ same way as, for example "cpan install MODULEPATTERN".
 -s --skip
   Skip modules that match this regex. (May be specified multiple
   times.)
+-a --auto-detect-pure-perl
+  Auto-detect whether a distribution is pure-Perl (i.e. does not
+  contain portions that require a C compiler) and flag the
+  produced distribution as such by changing its name.
 HERE
 
 my $pattern;
@@ -123,6 +131,7 @@ my $run_tests = 0;
 my $v = 0;
 my $merge = 0;
 my $nodocs = 0;
+my $auto_detect_pure_perl = 0;
 my @skip;
 GetOptions(
 	'h|help' => sub { print $usage; exit(1) },
@@ -134,6 +143,7 @@ GetOptions(
 	'm|merge' => \$merge,
 	'no-docs' => \$nodocs,
 	's|skip=s' => \@skip,
+        'a|auto-detect-pure-perl' => \$auto_detect_pure_perl,
 );
 
 if (not defined $pattern) {
@@ -147,12 +157,13 @@ if (not defined $pattern) {
 
 cpan_to_par(
 	pattern => $pattern,
-	($follow          ? (follow     => 1      ) : ()),
-	($v               ? (verbose    => 1      ) : ()),
-	($run_tests       ? (test       => 1      ) : ()),
-	(defined($outdir) ? (out        => $outdir) : ()),
-	($merge           ? (merge      => 1      ) : ()),
-	($nodocs          ? (strip_docs => 1      ) : ()),
-	(@skip            ? (skip       => \@skip ) : ()),
+	($follow                ? (follow     => 1      ) : ()),
+	($v                     ? (verbose    => 1      ) : ()),
+	($run_tests             ? (test       => 1      ) : ()),
+	(defined($outdir)       ? (out        => $outdir) : ()),
+	($merge                 ? (merge      => 1      ) : ()),
+	($nodocs                ? (strip_docs => 1      ) : ()),
+	(@skip                  ? (skip       => \@skip ) : ()),
+        ($auto_detect_pure_perl ? (auto_detect_pure_perl => 1) : ()),
 );
 
