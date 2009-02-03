@@ -5,7 +5,7 @@ use warnings;
 use Getopt::Long qw/GetOptions/;
 use PAR::Dist::FromCPAN;
 
-our $VERSION = '0.05';
+our $VERSION = '1.10';
 
 =pod
 
@@ -56,6 +56,10 @@ same way as, for example C<cpan install MODULEPATTERN>.
     Auto-detect whether a distribution is pure-Perl (i.e. does not
     contain portions that require a C compiler) and flag the
     produced distribution as such by changing its name.
+  --perl --perlversion
+    Defaults to your version of Perl. Used to determine
+    which modules are core perl and thus will be skipped.
+    Set this to 0 to package all core modules as well.
 
 =head1 SEE ALSO
 
@@ -76,7 +80,7 @@ Steffen Mueller, E<lt>smueller at cpan dot orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2006-2008 by Steffen Mueller
+Copyright (C) 2006-2009 by Steffen Mueller
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.6 or,
@@ -122,6 +126,10 @@ same way as, for example "cpan install MODULEPATTERN".
   Auto-detect whether a distribution is pure-Perl (i.e. does not
   contain portions that require a C compiler) and flag the
   produced distribution as such by changing its name.
+--perl --perlversion
+  Defaults to your version of Perl. Used to determine
+  which modules are core perl and thus will be skipped.
+  Set this to 0 to package all core modules as well.
 HERE
 
 my $pattern;
@@ -132,6 +140,7 @@ my $v = 0;
 my $merge = 0;
 my $nodocs = 0;
 my $auto_detect_pure_perl = 0;
+my $perl_version = $^V;
 my @skip;
 GetOptions(
 	'h|help' => sub { print $usage; exit(1) },
@@ -144,6 +153,7 @@ GetOptions(
 	'no-docs' => \$nodocs,
 	's|skip=s' => \@skip,
         'a|auto-detect-pure-perl' => \$auto_detect_pure_perl,
+        'perl|perl_version|perlversion|perl-version=s' => \$perl_version,
 );
 
 if (not defined $pattern) {
@@ -165,5 +175,6 @@ cpan_to_par(
 	($nodocs                ? (strip_docs => 1      ) : ()),
 	(@skip                  ? (skip       => \@skip ) : ()),
         ($auto_detect_pure_perl ? (auto_detect_pure_perl => 1) : ()),
+        perl_version => $perl_version,
 );
 

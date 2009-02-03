@@ -4,7 +4,7 @@ use 5.006;
 use strict;
 use warnings;
 
-our $VERSION = '0.10';
+our $VERSION = '1.10';
 
 use CPAN;
 use PAR::Dist;
@@ -54,6 +54,7 @@ sub cpan_to_par {
     }
     my $pattern = $args{pattern};
     my $skip_ary = $args{skip} || [];
+    my $target_perl = exists($args{perl_version}) ? ($args{perl_version}||0) : $^V;
 
     my $outdir = abs_path(defined($args{out}) ? $args{out} : '.');
     die "Output path not a directory." if not -d $outdir;
@@ -82,7 +83,7 @@ sub cpan_to_par {
         
 
         my $first_in = Module::CoreList->first_release( $mod->id );
-        if ( defined $first_in and $first_in <= $^V ) {
+        if ( defined $first_in and $first_in <= $target_perl ) {
             print "Skipping ".$mod->id.". It's been core since $first_in\n";
             next;
         }
@@ -352,6 +353,9 @@ Arguments:
   auto_detect_pure_perl => 1/0 (Flags the PAR distribution platform and
                                 perl version agnostic if it is deemed
                                 pure-perl.)
+  perl_version => Defaults to your version of Perl. Used to determine
+                  which modules are core perl and thus will be skipped.
+                  Set this to 0 to package all core modules as well.
 
 =head1 SEE ALSO
 
@@ -373,7 +377,7 @@ Jesse Vincent
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2006-2008 by Steffen Mueller
+Copyright (C) 2006-2009 by Steffen Mueller
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.6 or,
