@@ -4,7 +4,7 @@ use 5.006;
 use strict;
 use warnings;
 
-our $VERSION = '1.10';
+our $VERSION = '1.11';
 
 use CPAN;
 use PAR::Dist;
@@ -87,7 +87,13 @@ sub cpan_to_par {
             print "Skipping ".$mod->id.". It's been core since $first_in\n";
             next;
         }
-        if ( $mod->distribution->isa_perl ) {
+
+        my $distribution = $mod->distribution;
+        if (not defined $distribution) {
+            warn "Could not get distribution object for module '" . $mod->id . "'! Skipping!";
+            next;
+        }
+        if ( $distribution->isa_perl ) {
             print "Skipping ".$mod->id.". It's only in the core. OOPS\n";
             next;
         }
